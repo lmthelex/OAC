@@ -1,0 +1,87 @@
+section .data
+    firstMsg db "Ingrese un numero: "
+    lenf equ $ - firstMsg
+    secondMsg db "La solucion es: "
+    lens equ $ - secondMsg
+    number dq 0
+    solution dq 0
+
+section .text       ;Code Segment
+    global _start 
+
+_start:             ; impresion del mensaje de ingreso
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, firstMsg
+    mov rdx, lenf
+    syscall
+
+; SYS_READ          ; lectura del numero
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, number
+    mov rdx, 1
+    syscall
+
+    mov rcx, [number]
+    sub rcx, 30H    ; se le resta 48 para que detecte el numero y no el ASCII
+
+countLoop:          ; realiza la sumatoria de i² en bucle
+    mov rax, rcx
+    mul rcx         ; rax = rax*rcx
+    add [solution], rax
+    dec rcx
+    cmp rcx, 0
+    jne countLoop
+
+; SYS_WRITE         ; imprime el mensaje de respuesta de la sumatoria
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, secondMsg
+    mov rdx, lens
+    syscall
+
+test:           ; pushea en pila el resultado
+    xor rcx, rcx
+    mov r8, 10
+    mov rcx, [solution]
+    mov rbx, 0
+    xor rdx, rdx
+
+division:
+    mov rax, rcx
+    cmp rax, r8
+    jl aux
+
+    div r8      ;rdx residuo rax cociente
+    inc rbx
+    push rdx
+
+    mov rcx, rax
+    jmp division
+
+aux:
+    push rax
+    inc rbx
+
+loopprint:      ; popea e imprime cada digito
+    cmp rbx, 0
+    je final
+    dec rbx
+    pop rcx
+
+    add rcx, 30H
+    mov [solution], rcx
+
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, solution
+    mov rdx, 1
+    syscall
+    jmp loopprint
+
+final:          ; sale del programa de forma exitosa
+; SYS_EXIT
+    mov rax, 60
+    mov rdi, 0
+    syscall
